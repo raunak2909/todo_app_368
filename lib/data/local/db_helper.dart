@@ -30,13 +30,15 @@ class DbHelper {
     return await openDatabase(path, version: 1, onCreate: (db, version) {
       db.execute(
           "Create table $TABLE_TODO ( $COLUMN_TODO_ID integer primary key autoincrement, $COLUMN_TODO_TITLE text, $COLUMN_TODO_DESC text, $COLUMN_TODO_IS_COMPLETED integer, $COLUMN_TODO_CREATED_AT text )");
+
+      //db.insert();
     });
   }
 
-  Future<bool> addTodo(TodoModel newTodo) async {
+  Future<bool> addTodo(TodoModel todoModel) async {
     var db = await getDb();
 
-    int rowsEffected = await db.insert(TABLE_TODO, newTodo.toMap());
+    int rowsEffected = await db.insert(TABLE_TODO, todoModel.toMap());
 
     return rowsEffected > 0;
   }
@@ -47,17 +49,24 @@ class DbHelper {
 
     List<TodoModel> allTodo = [];
 
-    for (Map<String, dynamic> eachTodo in mData) {
-      allTodo.add(TodoModel.fromMap(eachTodo));
+    for (Map<String, dynamic> eachMap in mData) {
+      allTodo.add(TodoModel.fromMap(eachMap));
     }
 
     return allTodo;
   }
 
-  Future<bool> updateTodo(bool isCompleted, int id) async {
+  Future<bool> deleteTodo(int id) async {
+    var db = await getDb();
+    int rowsEffected = await db.delete(TABLE_TODO, where: "$COLUMN_TODO_ID = ?", whereArgs: ["$id"]);
+    return rowsEffected>0;
+  }
+
+  Future<bool> completeTask(bool isCompleted, int id) async {
     var db = await getDb();
 
-    int rowsEffected = await db.update(TABLE_TODO, {COLUMN_TODO_IS_COMPLETED : isCompleted ? 1 : 0},
+    int rowsEffected = await db.update(
+        TABLE_TODO, {COLUMN_TODO_IS_COMPLETED: isCompleted ? 1 : 0},
         where: "$COLUMN_TODO_ID = ?", whereArgs: ["$id"]);
 
     return rowsEffected > 0;
